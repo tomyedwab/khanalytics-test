@@ -1,0 +1,31 @@
+{
+    "definition": {
+        "name": "SimpleQuery",
+        "description": "A simple example query that pipes a BigQuery query to Slack",
+
+        "inputs": [
+            {"id": "query", "type": "static", "path": "SimpleQuery/SimpleQuery.sql"}
+        ],
+
+        "stages": [
+            {
+                "id": "bigquery",
+                "type": "stage_bigquery",
+                "inputs": {
+                    "query": {"id": "query", "type": "static"}
+                },
+                "outputs": {
+                    "results": {"id": "table", "type": "bigquery_table"},
+                    "store": {"id": "gcsoutput", "type": "temporary"}
+                }
+            }
+        ],
+
+        "outputs": [
+            {"id": "table", "type": "bigquery_table"},
+            {"id": "gcsoutput", "type": "temporary"}
+        ]
+    },
+    "environment": {
+    }
+}
