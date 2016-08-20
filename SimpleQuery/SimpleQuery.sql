@@ -1,17 +1,8 @@
-SELECT
-  date,
-  SUM(minutes)
-FROM (
-  /* table of TLT by day */
-  SELECT
-    DATE(start) AS date,
-    SUM(seconds) / 60 AS minutes
-  FROM
-    TABLE_QUERY(core, "table_id CONTAINS 'learning_time'")
-  GROUP BY
-    date
-)
-GROUP BY
-  date
-ORDER BY
-  date ASC
+SELECT bingo_conversion_events.conversion AS Conversion, COUNT(*) AS Count
+FROM TABLE_DATE_RANGE(logs.requestlogs_,
+  DATE_ADD(TIMESTAMP(CURRENT_DATE()), -1, "DAY"),
+  DATE_ADD(TIMESTAMP(CURRENT_DATE()), -1, "DAY"))
+WHERE bingo_conversion_events.conversion IS NOT NULL
+GROUP BY Conversion
+ORDER BY Count DESC
+LIMIT 12

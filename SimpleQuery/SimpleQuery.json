@@ -4,7 +4,10 @@
         "description": "A simple example query that pipes a BigQuery query to Slack",
 
         "inputs": [
-            {"id": "query", "type": "static", "path": "SimpleQuery/SimpleQuery.sql"}
+            {"id": "query", "type": "static", "path": "SimpleQuery/SimpleQuery.sql"},
+            {"id": "slack_room", "type": "constant"},
+            {"id": "slack_title", "type": "constant"},
+            {"id": "slack_description", "type": "constant"}
         ],
 
         "stages": [
@@ -18,14 +21,28 @@
                     "results": {"id": "table", "type": "bigquery_table"},
                     "store": {"id": "gcsoutput", "type": "temporary"}
                 }
+            },
+            {
+                "id": "slack",
+                "type": "stage_slack_output",
+                "inputs": {
+                    "table": {"id": "gcsoutput", "type": "temporary"},
+                    "slack_room": {"id": "slack_room", "type": "constant"},
+                    "slack_title": {"id": "slack_title", "type": "constant"},
+                    "slack_description": {"id": "slack_description", "type": "constant"}
+                }
             }
         ],
 
         "outputs": [
-            {"id": "table", "type": "bigquery_table"},
-            {"id": "gcsoutput", "type": "temporary"}
+            {"id": "table", "type": "bigquery_table"}
         ]
     },
     "environment": {
+        "variables": {
+            "slack_room": "databot",
+            "slack_title": "SimpleQuery",
+            "slack_description": "Just testing..."
+        }
     }
 }
