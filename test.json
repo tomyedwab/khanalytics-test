@@ -1,0 +1,73 @@
+{
+    "definition": {
+        "name": "Example",
+
+        "inputs": [
+            {"id": "foo", "type": "gcs"},
+            {"id": "bar", "type": "bigquery"}
+        ],
+
+        "stages": [
+            {
+                "id": "stage1",
+                "type": "stage_dummy",
+                "inputs": {
+                    "X": {"id": "foo", "type": "gcs"}
+                },
+                "outputs": {
+                    "Y": {"id": "output1", "type": "gcs"}
+                }
+            }, {
+                "id": "stage2",
+                "type": "dummy",
+                "runtime": {
+                    "retries_allowed": 2
+                },
+                "inputs": {},
+                "outputs": {
+                    "X": {"id": "output2", "type": "gcs"},
+                    "Z": {"id": "intermediate1", "type": "gcs"}
+                }
+            }, {
+                "id": "stage3",
+                "type": "stage_dummy",
+                "inputs": {
+                    "X": {"id": "bar", "type": "bigquery"},
+                    "Y": {"id": "output1", "type": "gcs"}
+                },
+                "outputs": {
+                    "Z": {"id": "intermediate2", "type": "gcs"}
+                }
+            }, {
+                "id": "stage4",
+                "type": "stage_dummy",
+                "inputs": {
+                    "Z": {"id": "intermediate2", "type": "gcs"}
+                },
+                "outputs": {}
+            }, {
+                "id": "stage5",
+                "type": "stage_dummy",
+                "inputs": {
+                    "Z": {"id": "intermediate1", "type": "gcs"}
+                },
+                "outputs": {}
+            }
+        ],
+
+        "outputs": [
+            {"id": "output1", "type": "gcs"},
+            {"id": "output2", "type": "gcs"}
+        ]
+    },
+    "environment": {
+        "variables": {
+            "gcs:foo": "gs://bucket/foo",
+            "bigquery:bar": "bigquery.bar",
+            "gcs:output1": "gs://bucket/output1",
+            "gcs:output2": "gs://bucket/output2",
+            "gcs:intermediate1": "gs://bucket/intermediate1",
+            "gcs:intermediate2": "gs://bucket/intermediate2"
+        }
+    }
+}
