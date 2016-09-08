@@ -1,0 +1,61 @@
+{
+    "name": "Mappers",
+    "description": "Generate Mappers dashboard data",
+
+    "inputs": {
+        "query_mcc": {"name": "query_mcc", "type": "static", "path": "BenHaley/Mappers/MostCoachyCoach.sql"},
+        "query_time": {"name": "query_time", "type": "static", "path": "BenHaley/Mappers/MappersTime.sql"},
+        "query_use": {"name": "query_use", "type": "static", "path": "BenHaley/Mappers/MappersUse.sql"}
+    },
+
+    "intermediates": {
+        "temp": {"type": "temporary"},
+        "table_mcc": {"name": "table_mcc", "type": "bigquery_table"},
+        "table_time": {"name": "table_time", "type": "bigquery_table"}
+    },
+
+    "outputs": {
+        "table_use": {"name": "table_use", "type": "bigquery_table", "default": "ben5.mappers_use_TEST"}
+    },
+
+    "stages": {
+        "most_coachy_coach": {
+            "name": "bigquery",
+            "inputs": {
+                "query": {"name": "query_mcc"}
+            },
+            "runtime": {
+                "image": "stage_bigquery"
+            },
+            "outputs": {
+                "results": {"name": "table_mcc"}
+            }
+        },
+        "mappers_time": {
+            "name": "bigquery",
+            "inputs": {
+                "query": {"name": "query_time"}
+            },
+            "runtime": {
+                "image": "stage_bigquery"
+            },
+            "outputs": {
+                "results": {"name": "table_time"}
+            }
+        },
+        "mappers_use": {
+            "name": "bigquery",
+            "inputs": {
+                "query": {"name": "query_use"},
+                "table_mcc": {"name": "table_mcc"},
+                "table_time": {"name": "table_time"}
+            },
+            "runtime": {
+                "image": "stage_bigquery"
+            },
+            "outputs": {
+                "results": {"name": "table_use"}
+            }
+        }
+    }
+}

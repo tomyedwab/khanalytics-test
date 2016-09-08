@@ -1,0 +1,101 @@
+{
+    "name": "ComplexQuery",
+    "description": "A simple example query that pipes a BigQuery query to Slack",
+
+    "inputs": {
+        "slack_room": {"name": "slack_room", "type": "constant", "default": "databot"},
+
+        "query1": {"name": "query1", "type": "static", "path": "SimpleQuery/SimpleQuery.sql"},
+        "title1": {"name": "title1", "type": "constant", "default": "SimpleQuery"},
+        "description1": {"name": "description1", "type": "constant", "default": ""},
+
+        "query2": {"name": "query2", "type": "static", "path": "ComplexQuery/ComplexQuery.sql"},
+        "title2": {"name": "title2", "type": "constant", "default": "ComplexQuery"},
+        "description2": {"name": "description2", "type": "constant", "default": ""}
+    },
+
+    "stages": {
+        "query1": {
+            "name": "Query #1",
+            "inputs": {
+                "slack_room": {"name": "slack_room"},
+                "query": {"name": "query1"},
+                "title": {"name": "title1"},
+                "description": {"name": "description1"}
+            },
+            "intermediates": {
+                "table": {"type": "bigquery_table"},
+                "temp": {"type": "temporary"}
+            },
+            "outputs": {},
+            "stages": {
+                "bigquery": {
+                    "name": "bigquery",
+                    "inputs": {
+                        "query": {"name": "query"}
+                    },
+                    "runtime": {
+                        "image": "stage_bigquery"
+                    },
+                    "outputs": {
+                        "results": {"name": "table"},
+                        "store": {"name": "temp"}
+                    }
+                },
+                "slack": {
+                    "name": "slack",
+                    "inputs": {
+                        "table": {"name": "temp"},
+                        "slack_room": {"name": "slack_room"},
+                        "slack_title": {"name": "title"},
+                        "slack_description": {"name": "description"}
+                    },
+                    "runtime": {
+                        "image": "stage_slack_output"
+                    }
+                }
+            }
+        },
+        "query2": {
+            "name": "Query #2",
+            "inputs": {
+                "slack_room": {"name": "slack_room"},
+                "query": {"name": "query2"},
+                "title": {"name": "title2"},
+                "description": {"name": "description2"}
+            },
+            "intermediates": {
+                "table": {"type": "bigquery_table"},
+                "temp": {"type": "temporary"}
+            },
+            "outputs": {},
+            "stages": {
+                "bigquery": {
+                    "name": "bigquery",
+                    "inputs": {
+                        "query": {"name": "query"}
+                    },
+                    "runtime": {
+                        "image": "stage_bigquery"
+                    },
+                    "outputs": {
+                        "results": {"name": "table"},
+                        "store": {"name": "temp"}
+                    }
+                },
+                "slack": {
+                    "name": "slack",
+                    "inputs": {
+                        "table": {"name": "temp"},
+                        "slack_room": {"name": "slack_room"},
+                        "slack_title": {"name": "title"},
+                        "slack_description": {"name": "description"}
+                    },
+                    "runtime": {
+                        "image": "stage_slack_output"
+                    }
+                }
+            }
+        }
+    }
+}
