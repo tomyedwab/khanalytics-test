@@ -1,0 +1,6 @@
+{
+    "Mappers": {
+        "filename": "BenHaley/Mappers/Mappers.json",
+        "schedule": "00 00 * * * x"
+    }
+}
