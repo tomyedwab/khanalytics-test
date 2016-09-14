@@ -1,6 +1,10 @@
 {
     "Mappers": {
         "filename": "BenHaley/Mappers/Mappers.json",
-        "schedule": "00 00 * * * x"
+        "schedule": "00 19 * * * x"
+    },
+    "Growth Experiments": {
+        "filename": "Cathleen/GrowthExperiments/GrowthExperiments.json",
+        "schedule": "00 15 * * * x"
     }
 }
