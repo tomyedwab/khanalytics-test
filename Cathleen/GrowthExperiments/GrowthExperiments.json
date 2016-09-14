@@ -9,12 +9,12 @@
     },
 
     "intermediates": {
-        "table_conversions": {"name": "table_conversions", "type": "bigquery_table", "default": "cathleen.growth_experiment_conversions_TEST"},
-        "table_participants": {"name": "table_participants", "type": "bigquery_table", "default": "cathleen.growth_experiment_participants_TEST"}
+        "table_conversions": {"name": "table_conversions", "type": "bigquery_table", "default": "cathleen.growth_experiment_conversions"},
+        "table_participants": {"name": "table_participants", "type": "bigquery_table", "default": "cathleen.growth_experiment_participants"}
     },
 
     "outputs": {
-        "table_agg": {"name": "table_agg", "type": "bigquery_table", "default": "cathleen.growth_experiment_conversion_agg_TEST"}
+        "table_agg": {"name": "table_agg", "type": "bigquery_table", "default": "cathleen.growth_experiment_conversion_agg"}
     },
 
     "stages": {

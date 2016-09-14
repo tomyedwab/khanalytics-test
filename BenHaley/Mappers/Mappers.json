@@ -15,7 +15,7 @@
     },
 
     "outputs": {
-        "table_use": {"name": "table_use", "type": "bigquery_table", "default": "ben5.mappers_use_TEST"}
+        "table_use": {"name": "table_use", "type": "bigquery_table", "default": "ben5.mappers_use"}
     },
 
     "stages": {
