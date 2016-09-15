@@ -5,6 +5,6 @@
     },
     "Growth Experiments": {
         "filename": "Cathleen/GrowthExperiments/GrowthExperiments.json",
-        "schedule": "25 20 * * * x"
+        "schedule": "00 15 * * * x"
     }
 }
