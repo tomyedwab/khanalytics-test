@@ -7,7 +7,9 @@ SELECT
  device,
  language,
  app,
- registered,
+ CASE WHEN registration_date < start_time
+   AND registration_date IS NOT NULL THEN TRUE
+   ELSE FALSE END as registered,
  CASE WHEN product IS NOT NULL THEN product
    # convert path for pageview uri into product
    WHEN uri_domain = 'mission' THEN uri_domain
@@ -28,11 +30,12 @@ FROM (
    SELECT
      start_time_timestamp as start_time,
      bingo_conversion_events.bingo_id as bingo_id,
+     elog_user_kaid as kaid,
      bingo_conversion_events.conversion as conversion,
      elog_device_type as device,
      elog_language as language,
      elog_KA_APP as app,
-     elog_user_is_registered as registered,
+     #elog_user_is_registered as registered,
      REGEXP_REPLACE(
        IFNULL( JSON_EXTRACT(bingo_conversion_events.extra,'$.Product'),
          JSON_EXTRACT(bingo_conversion_events.extra,'$.product')),
@@ -66,8 +69,11 @@ FROM (
        'video_started',
        'video_completed',
        'problem_attempt',
+       'return_visit',
        'article_scroll')
    , content_id)
 )  as  conversions
+LEFT JOIN latest.UserData ud
+ on conversions.kaid = ud.kaid
 LEFT JOIN latest_content.topic_tree topic_tree
  ON conversions.content_id = topic_tree.id
