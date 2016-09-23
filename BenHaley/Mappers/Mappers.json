@@ -3,9 +3,9 @@
     "description": "Generate Mappers dashboard data",
 
     "inputs": {
-        "query_mcc": {"name": "query_mcc", "type": "static", "path": "BenHaley/Mappers/MostCoachyCoach.sql"},
-        "query_time": {"name": "query_time", "type": "static", "path": "BenHaley/Mappers/MappersTime.sql"},
-        "query_use": {"name": "query_use", "type": "static", "path": "BenHaley/Mappers/MappersUse.sql"}
+        "query_mcc": {"name": "query_mcc", "type": "static", "path": "BenHaley/Mappers/MostCoachyCoach.sql", "description": "Query #1"},
+        "query_time": {"name": "query_time", "type": "static", "path": "BenHaley/Mappers/MappersTime.sql", "description": "Query #2"},
+        "query_use": {"name": "query_use", "type": "static", "path": "BenHaley/Mappers/MappersUse.sql", "description": "Query #3"}
     },
 
     "intermediates": {
@@ -15,7 +15,7 @@
     },
 
     "outputs": {
-        "table_use": {"name": "table_use", "type": "bigquery_table", "default": "ben5.mappers_use"}
+        "table_use": {"name": "table_use", "type": "bigquery_table", "default": "ben5.mappers_use", "description": "Output table"}
     },
 
     "stages": {
