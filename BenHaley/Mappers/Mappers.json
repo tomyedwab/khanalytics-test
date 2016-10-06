@@ -31,6 +31,19 @@
                 "results": {"name": "table_mcc"}
             }
         },
+        "number_of_students_with_recommendations": {
+            "name": "bigquery",
+            "inputs": {
+                "query": {"name": "table_noswr"},
+                "table_mcc": {"name": "table_mcc"}
+            },
+            "runtime": {
+                "image": "stage_bigquery"
+            },
+            "outputs": {
+                "results": {"name": "table_noswr"}
+            }
+        },
         "mappers_time": {
             "name": "bigquery",
             "inputs": {
@@ -48,7 +61,8 @@
             "inputs": {
                 "query": {"name": "query_use"},
                 "table_mcc": {"name": "table_mcc"},
-                "table_time": {"name": "table_time"}
+                "table_time": {"name": "table_time"},
+                "table_noswr": {"name": "table_noswr"}
             },
             "runtime": {
                 "image": "stage_bigquery"
