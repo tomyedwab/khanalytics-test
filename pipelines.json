@@ -5,6 +5,15 @@
     },
     "Growth Experiments": {
         "filename": "Cathleen/GrowthExperiments/GrowthExperiments.json",
-        "schedule": "00 15 * * * x"
+        "schedule": "manual"
+    },
+    "Simple Query": {
+        "filename": "SimpleQuery/SimpleQuery.json",
+        "schedule": "manual",
+        "notify": {
+            "slack": {
+                "room": "databot"
+            }
+        }
     }
 }
