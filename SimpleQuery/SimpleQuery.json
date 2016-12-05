@@ -31,10 +31,10 @@
         "slack": {
             "name": "slack",
             "inputs": {
-                "table": {"name": "temp"},
-                "slack_room": {"name": "slack_room"},
-                "slack_title": {"name": "title"},
-                "slack_description": {"name": "description"}
+                "inputFile": {"name": "temp"},
+                "roomName": {"name": "slack_room"},
+                "title": {"name": "title"},
+                "description": {"name": "description"}
             },
             "runtime": {
                 "image": "stage_slack_output"
