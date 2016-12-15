@@ -1,10 +1,10 @@
 {
     "Mappers": {
         "filename": "BenHaley/Mappers/Mappers.json",
-        "schedule": "00 19 * * * x"
+        "schedule": "manual"
     },
     "Library Dashboard": {
-        "filename": "Cathleen/LibraryDashboard.json",
+        "filename": "Cathleen/LibraryDashboard/LibraryDashboard.json",
         "schedule": "05 16 * * * x"
     },
     "Growth Experiments": {

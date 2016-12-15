@@ -25,49 +25,49 @@
     },
 
     "stages": {
-        "bigquery": {
+        "bq_daily_sessions": {
             "name": "bq_daily_sessions",
             "inputs": { "query": {"name": "q_daily_sessions"} },
             "runtime": { "image": "stage_bigquery" },
             "outputs": { "results": {"name": "tbl_daily_sessions"} }
         },
-        "bigquery": {
+        "bq_last_28_days_active_learners": {
             "name": "bq_last_28_days_active_learners",
             "inputs": { "query": {"name": "q_last_28_days_active_learners"} },
             "runtime": { "image": "stage_bigquery" },
             "outputs": { "results": {"name": "tbl_last_28_days_active_learners"} }
         },
-        "bigquery": {
+        "bq_learning_trends_by_platform_country_classroom": {
             "name": "bq_learning_trends_by_platform_country_classroom",
             "inputs": { "query": {"name": "q_learning_trends_by_platform_country_classroom"} },
             "runtime": { "image": "stage_bigquery" },
             "outputs": { "results": {"name": "tbl_learning_trends_by_platform_country_classroom"} }
         },
-        "bigquery": {
+        "bq_monthly_active_learners": {
             "name": "bq_monthly_active_learners",
             "inputs": { "query": {"name": "q_monthly_active_learners"} },
             "runtime": { "image": "stage_bigquery" },
             "outputs": { "results": {"name": "tbl_monthly_active_learners"} }
         },
-        "bigquery": {
+        "bq_monthly_session_length": {
             "name": "bq_monthly_session_length",
             "inputs": { "query": {"name": "q_monthly_session_length"} },
             "runtime": { "image": "stage_bigquery" },
             "outputs": { "results": {"name": "tbl_monthly_session_length"} }
         },
-        "bigquery": {
+        "bq_new_v_return_sessions": {
             "name": "bq_new_v_return_sessions",
             "inputs": { "query": {"name": "q_new_v_return_sessions"} },
             "runtime": { "image": "stage_bigquery" },
             "outputs": { "results": {"name": "tbl_new_v_return_sessions"} }
         },
-        "bigquery": {
+        "bq_retention_trend": {
             "name": "bq_retention_trend",
             "inputs": { "query": {"name": "q_retention_trend"} },
             "runtime": { "image": "stage_bigquery" },
             "outputs": { "results": {"name": "tbl_retention_trend"} }
         },
-        "bigquery": {
+        "bq_total_learning_time": {
             "name": "bq_total_learning_time",
             "inputs": { "query": {"name": "q_total_learning_time"} },
             "runtime": { "image": "stage_bigquery" },
