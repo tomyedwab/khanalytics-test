@@ -1,7 +1,7 @@
 {
     "Mappers": {
         "filename": "BenHaley/Mappers/Mappers.json",
-        "schedule": "manual"
+        "schedule": "00 19 * * * x"
     },
     "Library Dashboard": {
         "filename": "Cathleen/LibraryDashboard/LibraryDashboard.json",
