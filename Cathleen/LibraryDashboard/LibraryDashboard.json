@@ -1,0 +1,77 @@
+{
+    "name": "Library Dashboard",
+    "description": "Generate intermediate tables used by the Library Dashboard in Data Studio",
+
+    "inputs": {
+        "q_daily_sessions": {"name": "q_daily_sessions", "type": "static", "path": "Cathleen/LibraryDashboard/daily_sessions.sql"},
+        "q_last_28_days_active_learners": {"name": "q_last_28_days_active_learners", "type": "static", "path": "Cathleen/LibraryDashboard/last_28_days_active_learners.sql"},
+        "q_learning_trends_by_platform_country_classroom": {"name": "q_learning_trends_by_platform_country_classroom", "type": "static", "path": "Cathleen/LibraryDashboard/learning_trends_by_platform_country_classroom.sql"},
+        "q_monthly_active_learners": {"name": "q_monthly_active_learners", "type": "static", "path": "Cathleen/LibraryDashboard/monthly_active_learners.sql"},
+        "q_monthly_session_length": {"name": "q_monthly_session_length", "type": "static", "path": "Cathleen/LibraryDashboard/monthly_session_length.sql"},
+        "q_new_v_return_sessions": {"name": "q_new_v_return_sessions", "type": "static", "path": "Cathleen/LibraryDashboard/new_v_return_sessions.sql"},
+        "q_retention_trend": {"name": "q_retention_trend", "type": "static", "path": "Cathleen/LibraryDashboard/retention_trend.sql"},
+        "q_total_learning_time": {"name": "q_total_learning_time", "type": "static", "path": "Cathleen/LibraryDashboard/total_learning_time.sql"}
+    },
+
+    "outputs": {
+        "tbl_daily_sessions": {"name": "tbl_daily_sessions", "type": "bigquery_table", "default": "datastudio_dashboards.library_daily_sessions"},
+        "tbl_last_28_days_active_learners": {"name": "tbl_last_28_days_active_learners", "type": "bigquery_table", "default": "datastudio_dashboards.library_last_28_days_learners"},
+        "tbl_learning_trends_by_platform_country_classroom": {"name": "tbl_learning_trends_by_platform_country_classroom", "type": "bigquery_table", "default": "datastudio_dashboards.library_lt_by_segments"},
+        "tbl_monthly_active_learners": {"name": "tbl_monthly_active_learners", "type": "bigquery_table", "default": "datastudio_dashboards.library_monthly_learners"},
+        "tbl_monthly_session_length": {"name": "tbl_monthly_session_length", "type": "bigquery_table", "default": "datastudio_dashboards.library_monthly_session_length"},
+        "tbl_new_v_return_sessions": {"name": "tbl_new_v_return_sessions", "type": "bigquery_table", "default": "datastudio_dashboards.library_new_return_sessions"},
+        "tbl_retention_trend": {"name": "tbl_retention_trend", "type": "bigquery_table", "default": "datastudio_dashboards.library_retention_trends"},
+        "tbl_total_learning_time": {"name": "tbl_total_learning_time", "type": "bigquery_table", "default": "datastudio_dashboards.library_daily_learning_time"}
+    },
+
+    "stages": {
+        "bigquery": {
+            "name": "bq_daily_sessions",
+            "inputs": { "query": {"name": "q_daily_sessions"} },
+            "runtime": { "image": "stage_bigquery" },
+            "outputs": { "results": {"name": "tbl_daily_sessions"} }
+        },
+        "bigquery": {
+            "name": "bq_last_28_days_active_learners",
+            "inputs": { "query": {"name": "q_last_28_days_active_learners"} },
+            "runtime": { "image": "stage_bigquery" },
+            "outputs": { "results": {"name": "tbl_last_28_days_active_learners"} }
+        },
+        "bigquery": {
+            "name": "bq_learning_trends_by_platform_country_classroom",
+            "inputs": { "query": {"name": "q_learning_trends_by_platform_country_classroom"} },
+            "runtime": { "image": "stage_bigquery" },
+            "outputs": { "results": {"name": "tbl_learning_trends_by_platform_country_classroom"} }
+        },
+        "bigquery": {
+            "name": "bq_monthly_active_learners",
+            "inputs": { "query": {"name": "q_monthly_active_learners"} },
+            "runtime": { "image": "stage_bigquery" },
+            "outputs": { "results": {"name": "tbl_monthly_active_learners"} }
+        },
+        "bigquery": {
+            "name": "bq_monthly_session_length",
+            "inputs": { "query": {"name": "q_monthly_session_length"} },
+            "runtime": { "image": "stage_bigquery" },
+            "outputs": { "results": {"name": "tbl_monthly_session_length"} }
+        },
+        "bigquery": {
+            "name": "bq_new_v_return_sessions",
+            "inputs": { "query": {"name": "q_new_v_return_sessions"} },
+            "runtime": { "image": "stage_bigquery" },
+            "outputs": { "results": {"name": "tbl_new_v_return_sessions"} }
+        },
+        "bigquery": {
+            "name": "bq_retention_trend",
+            "inputs": { "query": {"name": "q_retention_trend"} },
+            "runtime": { "image": "stage_bigquery" },
+            "outputs": { "results": {"name": "tbl_retention_trend"} }
+        },
+        "bigquery": {
+            "name": "bq_total_learning_time",
+            "inputs": { "query": {"name": "q_total_learning_time"} },
+            "runtime": { "image": "stage_bigquery" },
+            "outputs": { "results": {"name": "tbl_total_learning_time"} }
+        }
+    }
+}

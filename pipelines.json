@@ -3,6 +3,10 @@
         "filename": "BenHaley/Mappers/Mappers.json",
         "schedule": "00 19 * * * x"
     },
+    "Library Dashboard": {
+        "filename": "Cathleen/LibraryDashboard.json",
+        "schedule": "05 16 * * * x"
+    },
     "Growth Experiments": {
         "filename": "Cathleen/GrowthExperiments/GrowthExperiments.json",
         "schedule": "manual"
