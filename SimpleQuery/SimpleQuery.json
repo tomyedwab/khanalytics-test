@@ -18,14 +18,14 @@
         "bigquery": {
             "name": "bigquery",
             "inputs": {
-                "query": {"name": "query"}
+                "code": {"name": "query"}
             },
             "runtime": {
                 "image": "stage_bigquery"
             },
             "outputs": {
                 "results": {"name": "table"},
-                "store": {"name": "temp"}
+                "stdout": {"name": "temp"}
             }
         },
         "slack": {
