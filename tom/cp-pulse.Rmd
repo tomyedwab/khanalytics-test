@@ -1,0 +1,123 @@
+---
+title: "Content Platform Pulse Check"
+date: "`r format(Sys.Date()-(as.POSIXlt(Sys.Date())$wday+2), '%B %d, %Y')`"
+output:
+  html_document:
+    theme: paper
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+  echo = FALSE,
+  fig.height = 3.4,
+  warning = FALSE,
+  message = FALSE
+)
+```
+
+```{r echo=FALSE, eval=FALSE}
+# Run this to get the token and save it in a file, must be run interactively.
+# This gets added to /var/credentials via a custom secret associated with the
+# pipeline.
+token <- gs_auth()
+saveRDS(token, file = "googlesheets_token.rds")
+```
+
+```{r results="hide"}
+library(ggplot2)
+library(googlesheets)
+library(knitr)
+library(lubridate)
+library(dplyr)
+library(gridExtra)
+library(scales)
+
+gs_auth(token="/var/credentials/googlesheets_token.rds")
+sheetRef <- gs_url("https://docs.google.com/spreadsheets/d/1-SWzwxHWl3gh08xJOa3P_gyNMsUw5ufwSvQMyrdTi5c")
+CPPulse <- gs_read(ss=sheetRef, ws="Form Responses 1")
+
+CPPulse$Date <- as.Date(CPPulse$Timestamp, format="%m/%d/%Y")
+CPPulse$Week <- floor_date(CPPulse$Date, "week")
+colnames(CPPulse) <- c("Timestamp", "Q1", "Q2", "Q3", "Q4", "Q5", "Q6", "Other", "Feedback", "Shoutouts", "Date", "Week")
+
+CPPulseLastWeek <- CPPulse[CPPulse$Week == max(CPPulse$Week),]
+```
+
+```{r}
+colorScale <- c("#ffffff", "#ee1c25", "#f26724", "#f8c611", "#84c341", "#33a94b")
+names(colorScale) <- c("0", "1", "2", "3", "4", "5")
+displayPlot <- function(qnum) {
+  CPPulse$Q <- CPPulse[[qnum]]
+  CPPulseLastWeek$Q <- CPPulseLastWeek[[qnum]]
+  plot1 <- CPPulse %>% group_by(Week, Q) %>% summarize(cnt=n()) %>%
+    ggplot(aes(x=Week, y=Q, size=cnt, color=factor(Q, levels=c(1,2,3,4,5)))) +
+      geom_point() +
+      geom_smooth(color="#4166ef") +
+      guides(color=F, size=F) +
+      ylab("Score") +
+      scale_y_continuous(limits=c(0, 5.3), oob=rescale_none, breaks=c(1:5), minor_breaks=NULL) +
+      scale_color_manual(values=colorScale)
+  plot2 <- CPPulseLastWeek %>% group_by(Q) %>% summarize(cnt=n()) %>%
+    ggplot(aes(x=Q, y=cnt, fill=factor(Q))) +
+      geom_bar(stat="identity", width=0.5) +
+      xlab("") +
+      ylab("This week") +
+      coord_flip() +
+      guides(color=F, fill=F) +
+      scale_x_continuous(limits=c(0, 5.3), oob=rescale_none, breaks=c(1:5), minor_breaks=NULL) +
+      scale_y_continuous(breaks=c(1:(max(CPPulseLastWeek$Q)+2)), minor_breaks=NULL) +
+      scale_fill_manual(values=colorScale)
+  grid.arrange(plot1, plot2, ncol=2, widths=c(300, 100))
+}
+```
+
+Hi team,
+
+Here is last week's team pulse survey. As always, please send any questions to me, Emily, or Anthony.
+
+#### Shout-outs from this week:
+
+```{r,results='asis'}
+prevfriday <- function(x) 7 * floor(as.numeric(x-5+4) / 7) + as.Date(5-4, origin = "1970-01-01")
+tbl <- CPPulse[!is.na(CPPulse$Shoutouts) & CPPulse$Date >= prevfriday(Sys.Date()),]
+for (text in tbl$Shoutouts) {
+  cat(gsub(pattern = "\n", replacement = "  \n", x = text))
+  cat("  \n")
+}
+```
+
+#### Q1: I feel good about this week in general
+
+```{r}
+displayPlot("Q1")
+```
+
+#### Q2: I feel good about the Content Platform initiative this week
+
+```{r}
+displayPlot("Q2")
+```
+
+#### Q3: I worked sustainably this week
+
+```{r}
+displayPlot("Q3")
+```
+
+#### Q4: I'm excited about what we're doing in this initiative and my role in it
+
+```{r}
+displayPlot("Q4")
+```
+
+#### Q5: I understand how strategic/tactical decisions for this initiative are made
+
+```{r}
+displayPlot("Q5")
+```
+
+#### Q6: I feel like this initiative's leads have been communicative and supportive enough
+
+```{r}
+displayPlot("Q6")
+```

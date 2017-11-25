@@ -1,0 +1,152 @@
+{
+    "name": "Content Platform tasks report",
+    "id": "ebb3549e983f41c9ba7f34df3c11fe3e",
+    "author": "tom",
+    "description": "Load tasks from Asana and generate a report based on the data.",
+    "isPublished": false,
+    "inputs": {
+        "task_tracker_script": {
+            "name": "task_tracker_script",
+            "type": "file",
+            "path": "git://git@github.com:khan/khanalytics-personal-pipelines file:/tom/query_pipeline_builder/cp-task-tracker.py"
+        },
+        "task_tracker_dependencies": {
+            "name": "task_tracker_dependencies",
+            "type": "constant",
+            "default": "google-api-python-client"
+        },
+        "task_ids_cache": {
+            "name": "task_ids_cache",
+            "type": "file",
+            "default": "gs://khanalytics/cp-task-ids.json"
+        },
+        "rpackages_snapshot": {
+            "name": "rpackages_snapshot",
+            "type": "file",
+            "default": "gs://ka_users/tom/rpackages.tar.gz"
+        },
+        "tasks_rmd_file": {
+            "name": "tasks_rmd_file",
+            "type": "file",
+            "path": "git://git@github.com:khan/khanalytics-personal-pipelines file:/tom/query_pipeline_builder/cp-task-report.Rmd"
+        },
+        "email_script": {
+            "name": "email_script",
+            "type": "file",
+            "path": "git://git@github.com:khan/khanalytics-personal-pipelines file:/tom/query_pipeline_builder/send-email.py"
+        },
+        "email_dependencies": {
+            "name": "email_dependencies",
+            "type": "constant",
+            "default": "sendgrid"
+        },
+        "from_email": {
+            "name": "from_email",
+            "type": "constant",
+            "default": "tom@khanacademy.org"
+        },
+        "to_email": {
+            "name": "to_email",
+            "type": "constant",
+            "default": "tom@khanacademy.org"
+        },
+        "email_subject": {
+            "name": "email_subject",
+            "type": "constant",
+            "default": "CP Asana tasks report"
+        }
+    },
+    "intermediates": {
+    },
+    "outputs": {
+        "task_info": {
+            "name": "task_info",
+            "type": "file",
+            "default": "gs://khanalytics/cp-tasks.json"
+        },
+        "tasks_output": {
+            "name": "tasks_output",
+            "type": "file",
+            "default": "gs://khanalytics/cp-tasks-report.html"
+        }
+    },
+    "stages": {
+        "tasks_from_asana": {
+            "name": "tasks_from_asana",
+            "inputs": {
+                "code": {
+                    "name": "task_tracker_script"
+                },
+                "dependencies": {
+                    "name": "task_tracker_dependencies"
+                },
+                "task_ids": {
+                    "name": "task_ids_cache"
+                }
+            },
+            "runtime": {
+                "image": "python",
+                "secret": "tom-secret"
+            },
+            "outputs": {
+                "output": {
+                    "name": "task_info"
+                }
+            }
+        },
+        "tasks_report": {
+            "name": "tasks_report",
+            "inputs": {
+                "code": {
+                    "name": "tasks_rmd_file"
+                },
+                "task_info": {
+                    "name": "task_info"
+                },
+                "snapshot": {
+                    "name": "rpackages_snapshot"
+                }
+            },
+            "runtime": {
+                "image": "rmarkdown",
+                "secret": "tom-secret"
+            },
+            "outputs": {
+                "output": {
+                    "name": "tasks_output"
+                }
+            }
+        },
+        "send_email": {
+            "name": "send_email",
+            "inputs": {
+                "code": {
+                    "name": "email_script"
+                },
+                "dependencies": {
+                    "name": "email_dependencies"
+                },
+                "html": {
+                    "name": "tasks_output"
+                },
+                "from_email": {
+                    "name": "from_email"
+                },
+                "to_email": {
+                    "name": "to_email"
+                },
+                "subject": {
+                    "name": "email_subject"
+                }
+            },
+            "runtime": {
+                "image": "python",
+                "secret": "tom-secret"
+            },
+            "outputs": {}
+        }
+    },
+    "notify": {
+        "email": {"on": ["EVENT_FAILED"], "email_id": "tom@khanacademy.org"}
+    }
+}

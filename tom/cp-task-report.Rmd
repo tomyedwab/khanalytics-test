@@ -1,0 +1,209 @@
+---
+title: "CP Tasks Report"
+author: "Tom Yedwab"
+date: "`r format(Sys.Date(), '%B %d, %Y')`"
+output:
+  html_document:
+    theme: paper
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+  echo = FALSE,
+  warning = FALSE,
+  message = FALSE,
+  fig.height = 3.4
+)
+# For load.file.from.var
+library(khanalytics)
+# For stream_in
+library(jsonlite)
+# For ggplot
+library(ggplot2)
+# For %>%, group_by, etc.
+library(dplyr)
+# For floor_date
+library(lubridate)
+```
+
+```{r results='hide', include=F}
+# Data!
+dataFile <- load.file.from.var("task_info", "./cp-tasks.json", ".json")
+tasks <- stream_in(file(dataFile))
+tasks$createdDate <- as.Date(round(tasks$created/(60*60*24)), origin="1970-01-01")
+tasks$createdWeek <- floor_date(tasks$createdDate, "week")
+tasks$completedDate <- as.Date(round(tasks$completed/(60*60*24)), origin="1970-01-01")
+
+recentTasks <- tasks[tasks$createdDate > as.Date("2017-07-01") & tasks$idealPath == T,]
+```
+
+**About this report:** This report is based on all the tasks in the Content Platform team's projects in Asana, primarily focused on Support tasks. Our support model is documented
+[here](https://docs.google.com/document/d/1ao47tNv7bNfWQNTWXaMpqko1Lcz6_vQ2SSSKcEBb2wE/edit#heading=h.g9luxpz0we4t). Tasks that generally follow the diagram in that document are considered as following the "ideal path" and most of the metrics below consider only those tasks. The hope is that the vast majority of tasks will follow this path and therefore we can meaningfully compare the time spent in each stage in the diagram with our expectations and identify bottlenecks.
+
+### What proportion of tasks are following the "ideal path"?
+
+We hope to get to a point where tasks are always following the path outlined and not doing anything strange. This may occasionally happen, for instance when tasks that are considered done actually turn out to not be done (although we could opt to create a new task in that case). It also happens when we forget to mark a priority on a task before moving it into Support Day-to-Day.
+
+See the [Support proposal](https://docs.google.com/document/d/1ao47tNv7bNfWQNTWXaMpqko1Lcz6_vQ2SSSKcEBb2wE/edit#heading=h.g9luxpz0we4t) for the basic outline of what state transitions tasks can generally go through and still be considered on the "ideal path".
+
+```{r}
+tasks %>% group_by(createdWeek, idealPath) %>% summarize(cnt=n()) %>%
+  ggplot(aes(x=createdWeek, y=cnt, fill=idealPath)) +
+    geom_bar(stat="identity") +
+    xlab("Created") +
+    ylab("Count")
+```
+
+### Where are tasks ending up?
+
+For tasks that start in various places (and haven't been closed), where are they now?
+
+```{r}
+recentTasks %>% filter(is.na(completed)) %>%
+  group_by(createdWeek, projectType, originatedFrom) %>%
+  summarize(cnt=n()) %>%
+  ggplot(aes(x=createdWeek, y=cnt, fill=projectType)) +
+    geom_bar(stat="identity") +
+    facet_wrap(~originatedFrom) +
+    xlab("Created") +
+    ylab("Count")
+```
+
+#### How old is the oldest task?
+
+This is literally the age of the oldest task (in days) in each state. The idea being: if we can keep tasks flowing through the pipeline, the oldest task will never be unacceptably old. We generally want to keep the numbers down in each of these states to make sure none of them becomes a bottleneck and issue reports can have confidence their issues will be addressed in a reasonable timeframe.
+
+```{r}
+relevantStates = c(
+  "Support (Accepted)", "Support (Priority)", "Support (Waiting)",
+  "Incoming (Prioritized)", "Incoming (Unprioritized)")
+
+tasks[tasks$currentState %in% relevantStates,] %>%
+  group_by(currentState, priority) %>%
+  summarize(max_age=max(totalTime, na.rm=T)) %>%
+  ggplot(aes(x=priority, y=pmax(30, max_age, na.rm=T),
+             fill=factor(pmin(3, floor((max_age+7)/14))))) +
+    geom_bar(stat="identity") +
+    geom_text(aes(label=max_age), color="#000000",
+              hjust="right", size=3, nudge_y=-3, nudge_x=-0.05, fontface="bold") +
+    geom_text(aes(label=max_age), color="#ffffff",
+              hjust="right", size=3, nudge_y=-5, fontface="bold") +
+    coord_flip() +
+    ylab("Max age (days)") +
+    guides(fill=F) +
+    scale_fill_brewer(palette="RdYlGn", direction=-1) +
+    facet_wrap(~currentState)
+```
+
+```{r}
+displayPlot <- function(dataset, timeVar, rangeMin, rangeMax) {
+  recentTasksExt <- dataset
+  recentTasksExt$time = dataset[[timeVar]]
+  delta = as.integer(
+    as.Date(max(recentTasksExt$createdWeek, na.rm=T)) -
+      as.Date(min(recentTasksExt$createdWeek, na.rm=T)))
+  minWeek <- min(recentTasksExt$createdWeek)
+  maxWeek <- max(recentTasksExt$createdWeek)
+  triangle <- data.frame(
+    x=c(minWeek, maxWeek, maxWeek),
+    y=c(delta, 0, delta))
+  greenRect <- data.frame(
+    x=c(minWeek, minWeek, maxWeek, maxWeek),
+    y=c(0, rangeMin, rangeMin, 0))
+  yellowRect <- data.frame(
+    x=c(minWeek, minWeek, maxWeek, maxWeek),
+    y=c(rangeMin, rangeMax, rangeMax, rangeMin))
+  redRect <- data.frame(
+    x=c(minWeek, minWeek, maxWeek, maxWeek),
+    y=c(rangeMax, delta, delta, rangeMax))
+  recentTasksExt %>% group_by(createdWeek) %>%
+      summarize(min=min(time, na.rm=T),
+              `1%`=quantile(time, probs=0.01, na.rm=T),
+              `25%`=quantile(time, probs=0.25, na.rm=T),
+              `50%`=quantile(time, probs=0.5, na.rm=T),
+              `75%`=quantile(time, probs=0.75, na.rm=T),
+              `99%`=quantile(time, probs=0.99, na.rm=T),
+              max=max(time, na.rm=T)) %>%
+      ggplot(aes(x=createdWeek)) +
+        geom_smooth(aes(y=min), color="#6565cf", se=F, size=0.5) +
+        geom_smooth(aes(y=`1%`), color="#bfbfec", se=F, size=0.5) +
+        geom_smooth(aes(y=`25%`), color="#c091ef", se=F, size=0.5) +
+        geom_smooth(aes(y=`50%`), color="#b828f4", se=F, size=0.5) +
+        geom_smooth(aes(y=`75%`), color="#74a7ed", se=F, size=0.5) +
+        geom_smooth(aes(y=`99%`), color="#b1e3da", se=F, size=0.5) +
+        geom_smooth(aes(y=max), color="#58cb7b", se=F, size=0.5) +
+        geom_polygon(data=greenRect, aes(x, y), fill="#1a914340") +
+        geom_polygon(data=yellowRect, aes(x, y), fill="#e8944a40") +
+        geom_polygon(data=redRect, aes(x, y), fill="#bc281d40") +
+        geom_polygon(data=triangle, aes(x, y), fill="#80808020") +
+        xlab("Created") +
+        ylab("Time (days)") +
+        theme(panel.grid.major = element_blank(),
+              panel.grid.minor = element_blank(),
+              panel.background = element_blank())
+}
+```
+
+## Distribution of time spent in various stages
+
+All the graphs below represent the time spent (in days) in particular stages of the support pipeline, with the x-axis being the week that the issue was reported. The shaded area represents the age of that cohort, which is by necessity the cap on how long any task could have spent in any stage. When the top curve follows the bottom edge of the triangle it means that some tasks are getting stuck in this stage indefinitely. What we want to see are flat lines with small values, meaning that tasks are consistently being dealt with quickly. 
+
+#### Time waiting in [CP] Incoming to be prioritized
+
+Time between when a task gets reported in [CP] Incoming and when it gets assigned a priority. This is usually done in Bug Review Board every Monday, so we expect this not to exceed 7 days.
+
+_Lines represent the 1st percentile, 25th percentile/1st quartile, median, 75th percentile/3rd quartile, and 99th percentile._
+
+```{r}
+displayPlot(recentTasks, "prioritizationTime", 7, 14)
+```
+
+#### Time waiting in [CP] Incoming to be sorted
+
+Time between when a task gets report in [CP] Incoming and when it gets moved to another project/board. This is also usually done in Bug Review Board every Monday, but occasionally tasks may sit for a few days while we figure out where they should go. Should generally be below 7 but definitely not above 14.
+
+_Lines represent the 1st percentile, 25th percentile/1st quartile, median, 75th percentile/3rd quartile, and 99th percentile._
+
+```{r}
+displayPlot(recentTasks, "toSortTime", 7, 14)
+```
+
+#### Time waiting in [CP] Support Day-to-Day to be accepted
+
+Time between when we move a task into Support and when the engineer on Support has triaged it. We expect this to be done at the beginning of every week so the target would be 1-3 days, and definitely almost always below 7.
+
+_Lines represent the 1st percentile, 25th percentile/1st quartile, median, 75th percentile/3rd quartile, and 99th percentile._
+
+```{r}
+displayPlot(recentTasks, "toAcceptTime", 3, 7)
+```
+
+#### Time spent in [CP] Support Day-to-Day
+
+Total time a task spends in Support before being completed. We don't have a specific target for this yet, but if we're keeping on top of support and not growing a backlog it should not exceed 7 days most weeks.
+
+_Lines represent the 1st percentile, 25th percentile/1st quartile, median, 75th percentile/3rd quartile, and 99th percentile._
+
+```{r}
+displayPlot(recentTasks, "timeInSupport", 7, 14)
+```
+
+#### Total time spent in Incoming/Support/Project (not Parking Lot)
+
+Total time tasks have been open, including currently open tasks, except those that we've decided to move to a Parking Lot (because that's an explicit signal that we're not going to address them in the near term). If this balloons it means we have tasks that are not being closed for whatever reason.
+
+_Lines represent the 1st percentile, 25th percentile/1st quartile, median, 75th percentile/3rd quartile, and 99th percentile._
+
+```{r}
+displayPlot(recentTasks[recentTasks$currentState != "Parking lot",], "totalTime", 14, 21)
+```
+
+#### Total time spent in Incoming/Support (Completed tasks)
+
+Time from the initial report to being completed in Support. This is basically (total time in Incoming) + (total time in Support) so it should be no more than 14-21 days if we're keeping up on triage and not building up a support backlog and I've done my math right.
+
+_Lines represent the 1st percentile, 25th percentile/1st quartile, median, 75th percentile/3rd quartile, and 99th percentile._
+
+```{r}
+displayPlot(recentTasks[!is.na(recentTasks$completed),], "totalTime", 14, 21)
+```

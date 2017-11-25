@@ -1,0 +1,106 @@
+{
+    "name": "Content Platform pulse check survey",
+    "id": "759cee21bd784f6ca691c677697b1c1f",
+    "author": "tom",
+    "description": "Collects results from the CP Pulse Check survey and emails a report to the team.",
+    "isPublished": false,
+    "inputs": {
+        "email_script": {
+            "name": "email_script",
+            "type": "file",
+            "path": "git://git@github.com:khan/khanalytics-personal-pipelines file:/tom/query_pipeline_builder/send-email.py"
+        },
+        "email_dependencies": {
+            "name": "email_dependencies",
+            "type": "constant",
+            "default": "sendgrid"
+        },
+        "rpackages_snapshot": {
+            "name": "rpackages_snapshot",
+            "type": "file",
+            "default": "gs://ka_users/tom/rpackages.tar.gz"
+        },
+        "pulse_Rmd_file": {
+            "name": "pulse_Rmd_file",
+            "type": "file",
+            "path": "git://git@github.com:khan/khanalytics-personal-pipelines file:/tom/query_pipeline_builder/cp-pulse.Rmd"
+        },
+        "from_email": {
+            "name": "from_email",
+            "type": "constant",
+            "default": "tom@khanacademy.org"
+        },
+        "to_email": {
+            "name": "to_email",
+            "type": "constant",
+            "default": "tom@khanacademy.org"
+        },
+        "email_subject": {
+            "name": "email_subject",
+            "type": "constant",
+            "default": "CP Weekly Team Pulse results"
+        }
+    },
+    "intermediates": {
+    },
+    "outputs": {
+        "pulse_output": {
+            "name": "pulse_output",
+            "type": "file",
+            "default": "gs://khanalytics/CPPulseCheck.html"
+        }
+    },
+    "stages": {
+        "pulse_boostrap": {
+            "name": "pulse_bootstrap",
+            "inputs": {
+                "code": {
+                    "name": "pulse_Rmd_file"
+                },
+                "snapshot": {
+                    "name": "rpackages_snapshot"
+                }
+            },
+            "runtime": {
+                "image": "rmarkdown",
+                "secret": "tom-secret"
+            },
+            "outputs": {
+                "output": {
+                    "name": "pulse_output"
+                }
+            }
+        },
+        "send_email": {
+            "name": "send_email",
+            "inputs": {
+                "code": {
+                    "name": "email_script"
+                },
+                "dependencies": {
+                    "name": "email_dependencies"
+                },
+                "html": {
+                    "name": "pulse_output"
+                },
+                "from_email": {
+                    "name": "from_email"
+                },
+                "to_email": {
+                    "name": "to_email"
+                },
+                "subject": {
+                    "name": "email_subject"
+                }
+            },
+            "runtime": {
+                "image": "python",
+                "secret": "tom-secret"
+            },
+            "outputs": {}
+        }
+    },
+    "notify": {
+        "email": {"on": ["EVENT_FAILED"], "email_id": "tom@khanacademy.org"}
+    }
+}

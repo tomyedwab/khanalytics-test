@@ -1,0 +1,406 @@
+{
+    "name": "Content Platform performance dashboard",
+    "id": "59b28b3800bd41d6ab9f324849d7e71d",
+    "author": "tom",
+    "isPublished": false,
+    "description": "Get updated performance metrics for CMS. See dashboard at http://datastudio.google.com/u/0/org//reporting/0ByM_uECe0rvfX0NvdURwUW12dzg/",
+    "inputs": {
+        "interpolator_script": {
+            "name": "interpolator_script",
+            "type": "file",
+            "path": "git://git@github.com:khan/khanalytics-prod-pipelines file:/shared/interpolator.py"
+        },
+        "exercises_incr_query": {
+            "name": "exercises_incr_query",
+            "type": "file",
+            "path": "git://git@github.com:khan/khanalytics-personal-pipelines file:/tom/query_pipeline_builder/cp-perf-exercises-incr.sql"
+        },
+        "load_incr_query": {
+            "name": "load_incr_query",
+            "type": "file",
+            "path": "git://git@github.com:khan/khanalytics-personal-pipelines file:/tom/query_pipeline_builder/cp-perf-load-incr.sql"
+        },
+        "revisions_incr_query": {
+            "name": "revisions_incr_query",
+            "type": "file",
+            "path": "git://git@github.com:khan/khanalytics-personal-pipelines file:/tom/query_pipeline_builder/cp-perf-revisions-incr.sql"
+        },
+        "publish_query": {
+            "name": "publish_query",
+            "type": "file",
+            "path": "git://git@github.com:khan/khanalytics-personal-pipelines file:/tom/query_pipeline_builder/cp-perf-publish.sql"
+        },
+        "start_publish_query": {
+            "name": "start_publish_query",
+            "type": "file",
+            "path": "git://git@github.com:khan/khanalytics-personal-pipelines file:/tom/query_pipeline_builder/cp-perf-start-publish.sql"
+        },
+        "publish_uptime_query": {
+            "name": "publish_uptime_query",
+            "type": "file",
+            "path": "git://git@github.com:khan/khanalytics-personal-pipelines file:/tom/query_pipeline_builder/cp-perf-publish-uptime.sql"
+        },
+        "dashboard_final_query": {
+            "name": "dashboard_final_query",
+            "type": "file",
+            "path": "git://git@github.com:khan/khanalytics-personal-pipelines file:/tom/query_pipeline_builder/cp-perf-dashboard-final.sql"
+        },
+        "query_write_type_append": {
+            "name": "query_write_type_append",
+            "type": "constant",
+            "default": "append"
+        },
+        "email_script": {
+            "name": "email_script",
+            "type": "file",
+            "path": "git://git@github.com:khan/khanalytics-personal-pipelines file:/tom/query_pipeline_builder/send-email.py"
+        },
+        "email_dependencies": {
+            "name": "email_dependencies",
+            "type": "constant",
+            "default": "sendgrid"
+        },
+        "rpackages_snapshot": {
+            "name": "rpackages_snapshot",
+            "type": "file",
+            "default": "gs://ka_users/tom/rpackages.tar.gz"
+        },
+        "dashboard_rmd_file": {
+            "name": "dashboard_rmd_file",
+            "type": "file",
+            "path": "git://git@github.com:khan/khanalytics-personal-pipelines file:/tom/query_pipeline_builder/cp-perf-dashboard.Rmd"
+        },
+        "from_email": {
+            "name": "from_email",
+            "type": "constant",
+            "default": "tom@khanacademy.org"
+        },
+        "to_email": {
+            "name": "to_email",
+            "type": "constant",
+            "default": "tom@khanacademy.org"
+        },
+        "email_subject": {
+            "name": "email_subject",
+            "type": "constant",
+            "default": "CP Performance Report"
+        }
+    },
+    "intermediates": {
+        "publish_interp_query": {
+            "name": "publish_interp_query",
+            "type": "file"
+        },
+        "publish_uptime_interp_query": {
+            "name": "publish_uptime_interp_query",
+            "type": "file"
+        },
+        "exercises_incr_table": {
+            "name": "exercises_incr_table",
+            "type": "bigquery_table",
+            "dataset": "tomyedwab",
+            "default": "khanacademy.org:deductive-jet-827:tomyedwab.content_tools_metrics_exercises_incr"
+        },
+        "load_incr_table": {
+            "name": "load_incr_table",
+            "type": "bigquery_table",
+            "dataset": "tomyedwab",
+            "default": "khanacademy.org:deductive-jet-827:tomyedwab.content_tools_metrics_load_incr"
+        },
+        "revisions_incr_table": {
+            "name": "revisions_incr_table",
+            "type": "bigquery_table",
+            "dataset": "tomyedwab",
+            "default": "khanacademy.org:deductive-jet-827:tomyedwab.content_tools_metrics_revisions_incr"
+        },
+        "start_publish_incr_table": {
+            "name": "start_publish_incr_table",
+            "type": "bigquery_table",
+            "dataset": "tomyedwab",
+            "default": "khanacademy.org:deductive-jet-827:tomyedwab.content_tools_metrics_start_publish_incr"
+        },
+        "publish_table": {
+            "name": "publish_table",
+            "type": "bigquery_table",
+            "dataset": "tomyedwab",
+            "default": "khanacademy.org:deductive-jet-827:tomyedwab.content_tools_metrics_publish"
+        }
+    },
+    "outputs": {
+        "dashboard_final_table": {
+            "name": "dashboard_final_table",
+            "type": "bigquery_table",
+            "dataset": "tomyedwab",
+            "default": "khanacademy.org:deductive-jet-827:tomyedwab.content_tools_metrics_final"
+        },
+        "dashboard_final_file": {
+            "name": "dashboard_final_file",
+            "type": "file",
+            "default": "gs://khanalytics/cp_metrics.csv.gz"
+        },
+        "publish_uptime_table": {
+            "name": "publish_uptime_table",
+            "type": "bigquery_table",
+            "dataset": "tomyedwab",
+            "default": "khanacademy.org:deductive-jet-827:tomyedwab.content_tools_metrics_publish_uptime"
+        },
+        "publish_uptime_file": {
+            "name": "publish_uptime_file",
+            "type": "file",
+            "default": "gs://khanalytics/cp_publish_uptime.csv.gz"
+        },
+        "dashboard_output": {
+            "name": "dashboard_output",
+            "type": "file",
+            "default": "gs://khanalytics/CPPerformanceReport.html"
+        }
+    },
+    "stages": {
+        "interpolate_publish_query": {
+            "name": "interpolate_publish_query",
+            "inputs": {
+                "code": {
+                    "name": "interpolator_script"
+                },
+                "pipeline_info": {
+                    "name": "_pipeline_info"
+                },
+                "query_template": {
+                    "name": "publish_query"
+                }
+            },
+            "runtime": {
+                "image": "python"
+            },
+            "outputs": {
+                "query_file": {
+                    "name": "publish_interp_query"
+                }
+            }
+        },
+        "interpolate_publish_uptime_query": {
+            "name": "interpolate_publish_uptime_query",
+            "inputs": {
+                "code": {
+                    "name": "interpolator_script"
+                },
+                "pipeline_info": {
+                    "name": "_pipeline_info"
+                },
+                "query_template": {
+                    "name": "publish_uptime_query"
+                }
+            },
+            "runtime": {
+                "image": "python"
+            },
+            "outputs": {
+                "query_file": {
+                    "name": "publish_uptime_interp_query"
+                }
+            }
+        },
+        "run_exercises_incr_query": {
+            "name": "run_exercises_incr_query",
+            "inputs": {
+                "code": {
+                    "name": "exercises_incr_query"
+                },
+                "write_type": {
+                    "name": "query_write_type_append"
+                }
+            },
+            "outputs": {
+                "results": {
+                    "name": "exercises_incr_table"
+                }
+            },
+            "runtime": {
+                "image": "stage_bigquery"
+            }
+        },
+        "run_load_incr_query": {
+            "name": "run_load_incr_query",
+            "inputs": {
+                "code": {
+                    "name": "load_incr_query"
+                },
+                "write_type": {
+                    "name": "query_write_type_append"
+                }
+            },
+            "outputs": {
+                "results": {
+                    "name": "load_incr_table"
+                }
+            },
+            "runtime": {
+                "image": "stage_bigquery"
+            }
+        },
+        "run_revisions_incr_query": {
+            "name": "run_revisions_incr_query",
+            "inputs": {
+                "code": {
+                    "name": "revisions_incr_query"
+                },
+                "write_type": {
+                    "name": "query_write_type_append"
+                }
+            },
+            "outputs": {
+                "results": {
+                    "name": "revisions_incr_table"
+                }
+            },
+            "runtime": {
+                "image": "stage_bigquery"
+            }
+        },
+        "run_publish_query": {
+            "name": "run_publish_query",
+            "inputs": {
+                "code": {
+                    "name": "publish_interp_query"
+                }
+            },
+            "outputs": {
+                "results": {
+                    "name": "publish_table"
+                }
+            },
+            "runtime": {
+                "image": "stage_bigquery"
+            }
+        },
+        "run_start_publish_query": {
+            "name": "run_start_publish_query",
+            "inputs": {
+                "code": {
+                    "name": "start_publish_query"
+                },
+                "write_type": {
+                    "name": "query_write_type_append"
+                }
+            },
+            "outputs": {
+                "results": {
+                    "name": "start_publish_incr_table"
+                }
+            },
+            "runtime": {
+                "image": "stage_bigquery"
+            }
+        },
+        "run_publish_uptime_query": {
+            "name": "run_publish_uptime_query",
+            "inputs": {
+                "code": {
+                    "name": "publish_uptime_interp_query"
+                }
+            },
+            "outputs": {
+                "results": {
+                    "name": "publish_uptime_table"
+                },
+                "stdout": {
+                    "name": "publish_uptime_file"
+                }
+            },
+            "runtime": {
+                "image": "stage_bigquery"
+            }
+        },
+        "run_dashboard_final_query": {
+            "name": "run_dashboard_final_query",
+            "inputs": {
+                "code": {
+                    "name": "dashboard_final_query"
+                },
+                "exercises_incr_table": {
+                    "name": "exercises_incr_table"
+                },
+                "load_incr_table": {
+                    "name": "load_incr_table"
+                },
+                "revisions_incr_table": {
+                    "name": "revisions_incr_table"
+                },
+                "start_publish_incr_table": {
+                    "name": "start_publish_incr_table"
+                },
+                "publish_table": {
+                    "name": "publish_table"
+                }
+            },
+            "outputs": {
+                "results": {
+                    "name": "dashboard_final_table"
+                },
+                "stdout": {
+                    "name": "dashboard_final_file"
+                }
+            },
+            "runtime": {
+                "image": "stage_bigquery"
+            }
+        },
+        "rmarkdown": {
+            "name": "rmarkdown",
+            "inputs": {
+                "code": {
+                    "name": "dashboard_rmd_file"
+                },
+                "dashboard_final_file": {
+                    "name": "dashboard_final_file"
+                },
+                "publish_uptime_file": {
+                    "name": "publish_uptime_file"
+                },
+                "snapshot": {
+                    "name": "rpackages_snapshot"
+                }
+            },
+            "runtime": {
+                "image": "rmarkdown",
+                "secret": "tom-secret"
+            },
+            "outputs": {
+                "output": {
+                    "name": "dashboard_output"
+                }
+            }
+        },
+        "send_email": {
+            "name": "send_email",
+            "inputs": {
+                "code": {
+                    "name": "email_script"
+                },
+                "dependencies": {
+                    "name": "email_dependencies"
+                },
+                "html": {
+                    "name": "dashboard_output"
+                },
+                "from_email": {
+                    "name": "from_email"
+                },
+                "to_email": {
+                    "name": "to_email"
+                },
+                "subject": {
+                    "name": "email_subject"
+                }
+            },
+            "runtime": {
+                "image": "python",
+                "secret": "tom-secret"
+            },
+            "outputs": {}
+        }
+    },
+    "notify": {
+        "email": {"on": ["EVENT_FAILED"], "email_id": "tom@khanacademy.org"}
+    }
+}

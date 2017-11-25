@@ -1,0 +1,151 @@
+{
+    "author": "tom",
+    "description": "Example of using an Rmarkdown script to generate a report.",
+    "id": "40310e1f090742fa93843db17491f03d",
+    "inputs": {
+        "query_language": {
+            "default": "legacy",
+            "name": "query_language",
+            "type": "constant"
+        },
+        "query_file": {
+            "name": "query_file",
+            "path": "git://git@github.com:khan/khanalytics-personal-pipelines file:/tom/query_pipeline_builder/Rmarkdown-example.sql",
+            "type": "file"
+        },
+        "intermediate_table": {
+            "name": "intermediate_table",
+            "dataset": "tomyedwab",
+            "type": "bigquery_table"
+        },
+        "email_script": {
+            "name": "email_script",
+            "type": "file",
+            "path": "git://git@github.com:khan/khanalytics-personal-pipelines file:/tom/query_pipeline_builder/send-email.py"
+        },
+        "email_dependencies": {
+            "name": "email_dependencies",
+            "type": "constant",
+            "default": "sendgrid"
+        },
+        "rpackages_snapshot": {
+            "name": "rpackages_snapshot",
+            "type": "file",
+            "default": "gs://ka_users/tom/rpackages.tar.gz"
+        },
+        "rmd_file": {
+            "name": "rmd_file",
+            "type": "file",
+            "path": "git://git@github.com:khan/khanalytics-personal-pipelines file:/tom/query_pipeline_builder/Rmarkdown-example.Rmd"
+        },
+        "from_email": {
+            "name": "from_email",
+            "type": "constant",
+            "default": "tom@khanacademy.org"
+        },
+        "to_email": {
+            "name": "to_email",
+            "type": "constant",
+            "default": "tom@khanacademy.org"
+        },
+        "email_subject": {
+            "name": "email_subject",
+            "type": "constant",
+            "default": "Rmarkdown example report"
+        }
+    },
+    "intermediates": {
+        "query_results": {
+            "name": "query_results",
+            "type": "file",
+            "default": "gs://khanalytics/Rmarkdown-example.csv.gz"
+        },
+        "html_output": {
+            "name": "html_output",
+            "type": "file"
+        }
+    },
+    "name": "Rmarkdown Example",
+    "notify": {
+        "email": {
+            "email_id": "tom@khanacademy.org",
+            "on": [
+                "EVENT_FAILED"
+            ]
+        }
+    },
+    "stages": {
+        "run_query": {
+            "inputs": {
+                "code": {
+                    "name": "query_file"
+                },
+                "language": {
+                    "name": "query_language"
+                },
+                "results": {
+                    "name": "intermediate_table"
+                }
+            },
+            "outputs": {
+                "stdout": {
+                    "name": "query_results"
+                }
+            },
+            "name": "run_query",
+            "runtime": {
+                "image": "stage_bigquery"
+            }
+        },
+        "rmarkdown": {
+            "name": "rmarkdown",
+            "inputs": {
+                "code": {
+                    "name": "rmd_file"
+                },
+                "data": {
+                    "name": "query_results"
+                },
+                "snapshot": {
+                    "name": "rpackages_snapshot"
+                }
+            },
+            "runtime": {
+                "image": "rmarkdown"
+            },
+            "outputs": {
+                "output": {
+                    "name": "html_output"
+                }
+            }
+        },
+        "send_email": {
+            "name": "send_email",
+            "inputs": {
+                "code": {
+                    "name": "email_script"
+                },
+                "dependencies": {
+                    "name": "email_dependencies"
+                },
+                "html": {
+                    "name": "html_output"
+                },
+                "from_email": {
+                    "name": "from_email"
+                },
+                "to_email": {
+                    "name": "to_email"
+                },
+                "subject": {
+                    "name": "email_subject"
+                }
+            },
+            "runtime": {
+                "image": "python",
+                "secret": "tom-secret"
+            },
+            "outputs": {}
+        }
+    }
+}

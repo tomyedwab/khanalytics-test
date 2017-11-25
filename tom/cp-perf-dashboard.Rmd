@@ -1,0 +1,488 @@
+---
+title: "Content Platform Performance Dashboard"
+author: "Tom Yedwab (tom@khanacademy.org)"
+date: "`r format(Sys.Date(), '%B %d, %Y')`"
+output:
+  html_document:
+    theme: paper
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+  echo = FALSE,
+  warning = FALSE,
+  message = FALSE,
+  fig.width = 9.5,
+  fig.height = 4
+)
+Sys.setenv("GCS_AUTH_FILE" = "/var/credentials/khanalytics-key.json")
+library(googleCloudStorageR)
+library(readr)
+library(ggplot2)
+library(reshape)
+library(plyr)
+```
+
+```{r results='hide', include=F}
+# Data!
+# TODO(tom) Parameterize this instead of hard-coding it
+gcs_get_object(
+  "cp_metrics.csv.gz", bucket="khanalytics",
+  saveToDisk="/tmp/metrics.csv.gz", overwrite=T)
+metrics <- read_csv("/tmp/metrics.csv.gz", 
+                    col_types = cols(week = col_date(format = "%Y-%m-%d")))
+
+gcs_get_object(
+  "cp_publish_uptime.csv.gz", bucket="khanalytics",
+  saveToDisk="/tmp/uptime.csv.gz", overwrite=T)
+publish_uptime <- read_csv("/tmp/uptime.csv.gz", 
+                           col_types = cols(day = col_date(format = "%Y-%m-%d")))
+
+```
+
+```{r}
+displayQuantilesPlot <- function(varBase, color1, color2, color3, ylab, ymax) {
+  data <- metrics
+  ymax <- max(data[[paste0(varBase, "p95")]], na.rm=T) * 1.2
+  off <- 0.05 * ymax
+  data$p5_label = formatC(data[[paste0(varBase, "p5")]], format="f", digits=1)
+  data$median_label = formatC(data[[paste0(varBase, "median")]], format="f", digits=1)
+  data$p95_label = formatC(data[[paste0(varBase, "p95")]], format="f", digits=1)
+  ggplot(data, aes(x=week)) +
+    geom_line(aes_string(y=paste0(varBase, "p5")), color=color1, size=1) +
+    geom_line(aes_string(y=paste0(varBase, "p95")), color=color1, size=1) +
+    geom_line(aes_string(y=paste0(varBase, "q1")), color=color2, size=1.2) +
+    geom_line(aes_string(y=paste0(varBase, "q3")), color=color2, size=1.2) +
+    geom_line(aes_string(y=paste0(varBase, "median")), color=color3, size=1.4) +
+    geom_text(aes_string(y=paste0(varBase, "p5"), label="p5_label"),
+              nudge_y=-0.6*off, color=color2, size=2.5) +
+    geom_text(aes_string(y=paste0(varBase, "median"), label="median_label"),
+              nudge_y=0.6*off, color=color3, size=2.5) +
+    geom_text(aes_string(y=paste0(varBase, "p95"), label="p95_label"),
+              nudge_y=0.6*off, color=color2, size=2.5) +
+    ylim(0, ymax) + ylab(ylab) + xlab("Week")
+}
+```
+
+```{r}
+displayErrorsAndWarnings <- function(varBase, varError, nameError, varWarning, nameWarning, ylab) {
+  # Create columns for errors & warnings
+  data <- data.frame(week=metrics$week, attempts=metrics[[paste0(varBase, "attempts")]])
+  data[[nameError]] = metrics[[paste0(varBase, varError)]]
+  data[[nameWarning]] = metrics[[paste0(varBase, varWarning)]]
+  # Melt the data to get separate rows for errors and warnings
+  melted <- melt(data, id.vars=c("week", "attempts"))
+  # Calculate a percentage for each week
+  melted$pct <- melted$value * 100 / melted$attempts
+  # Sort the factor levels to ensure that warnings stack on top of errors
+  melted$variable = factor(melted$variable, levels=c(nameWarning, nameError))
+  # Plot!
+  ggplot(melted, aes(x=week)) +
+    geom_bar(aes(y=pct, fill=variable), stat="identity") +
+    geom_text(aes(y=pmax(ifelse(variable == nameWarning, 7, 0), pct),
+                  label=paste0(formatC(pct, format="f", digits=0), "%"),
+                  color=variable),
+              position=position_stack(), vjust=-0.5, size=2.5) +
+    ylab(ylab) + xlab("Week") + ylim(0, 110) +
+    guides(fill=F, color=F) +
+    scale_fill_manual(values=c("#e8944a", "#bc281d")) + 
+    scale_color_manual(values=c("#a55a17", "#76130c"))
+}
+```
+
+```{r}
+displayServerFailures <- function(varBase, ylab) {
+  data <- metrics
+  data$pct = data[[paste0(varBase, "failures")]] * 100 / data[[paste0(varBase, "attempts")]]
+  ggplot(data, aes(x=week)) +
+    geom_bar(aes(y=pct), stat="identity", fill="#bc281d") +
+    geom_text(aes(y=pct,
+                  label=paste0(formatC(pct, format="f", digits=0), "%")),
+              color="#76130c",
+              position=position_stack(), vjust=-0.5, size=2.5) +
+    guides(fill=F) +
+    ylab(ylab) + xlab("Week") + ylim(0, 110) + xlim(min(metrics$week), max(metrics$week) + 7)
+}
+```
+
+```{r}
+publishUptimePlot <- function(startDate, varFailure) {
+  data <- publish_uptime[!is.na(publish_uptime$day) & publish_uptime$day >= as.Date(startDate),]
+  data$year <- as.POSIXlt(data$day)$year + 1900
+  data$month <- as.numeric(as.POSIXlt(data$day)$mon + 1)
+  data$monthf <- factor(
+    data$month,
+    levels=as.character(1:12),
+    labels=c("Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"),
+    ordered=TRUE)
+  
+  data$weekday = as.POSIXlt(data$day)$wday
+  data$weekdayf <- factor(
+    ((data$weekday-1) %% 7) + 1,
+    levels=c(1:7),
+    labels=c("M","Tu","W","Th","F","Sa","Su"),
+    ordered=TRUE)
+  
+  data$yearmonth <- as.POSIXlt(data$day)$year * 12 + as.POSIXlt(data$day)$mon
+  data$yearmonthf <- factor(data$yearmonth)
+  
+  data$week <- as.numeric(format(data$day,"%W"))
+  
+  data <- ddply(data,.(yearmonthf), transform, monthweek=1+week-min(week))
+  data$has_failures = data[[varFailure]] > 0
+  
+  ggplot(data, aes(weekdayf, -1*monthweek, fill = has_failures)) + 
+    geom_tile(colour = "white") +
+    facet_wrap(year ~ monthf, labeller = label_wrap_gen(multi_line=FALSE)) +
+    scale_fill_manual(values=c("#66bd85", "#d72315")) +
+    ylab("Week of Month") +
+    xlab("") +
+    guides(fill=F) +
+    theme(
+      panel.grid.major.y = element_blank(),
+      panel.grid.minor.y = element_blank(),
+      panel.grid.major.x = element_blank(),
+      panel.grid.minor.x = element_blank(),
+      axis.text.y = element_blank(),
+      axis.ticks.y = element_blank())
+}
+```
+
+**About this report:** This is a weekly report generated from a combination of server request logs and datastore backups in BigQuery. It tracks various performance characteristics of the content management system, the purpose of which is to measure reliability and performance and pinpoint regressions that otherwise get reported as "the editors feel slow today", as well as objectively measuring progress in these areas.
+
+Questions? Come ask in #content-platform or #cp-eng.
+
+**Contains data through the week of `r max(metrics$week)`.**
+
+## Publish reliability
+
+Publish reliability impacts the Content Team as well as Content Platform. When publishes fail, content creators are often uncertain as to the state of their content, which slows their work down. We rely on publishes completing reliably to get new content and improvements to learners efficiently, and in some cases we have deadlines when content must be live to satisfy marketing or external partnership needs.
+
+The system has been architected with the design goal that publish errors are always indicative of a bug in the system, and should never be the result of changes the content creator has made via the user interface. Therefore when publishes fail it also falls on Content Platform to resolve the blocking issue, making sure the content is eventually published, as well as investigate and remedy the underlying causes. Having a stable and reliable publish system means being able to confidently make changes to the content infrastructure without increasing our support burden.
+
+### Publish failure rate (English)
+
+_In red:_ Rates of publish failure. Failures mean the content is not published to the site, an email is sent to the email of the publisher as well as to Content Platform support.
+_In orange:_ Non-fatal retries. Retries are non-fatal and transparent to users but they do cause publish to take longer, and repeated retries eventually turn into failures.
+
+```{r}
+displayErrorsAndWarnings(
+  "en_publish_", "failures", "Failures", "retries", "Retries", "English publish failure rate")
+```
+
+### Publish uptime (English)
+
+_In red:_ days on which there was at least one publish failure.
+_In green:_ days without a single publish failure.
+
+```{r fig.height=7}
+publishUptimePlot("2016-01-01", "en_publish_failures")
+```
+
+### Publish failure rate (Localized topic trees)
+
+See related section above.
+
+```{r}
+displayErrorsAndWarnings(
+  "intl_publish_", "failures", "Failures", "retries", "Retries", "Intl publish failure rate")
+```
+
+### Publish uptime (Localized topic trees)
+
+See related section above.
+
+```{r}
+publishUptimePlot("2017-08-01", "intl_publish_failures")
+```
+
+### Error rate loading CMS-based publish UI
+
+Server errors that occur when clicking "Publish changes..." in the topic tree editor to select changes to publish. These block the content creator from actually starting a publish. Does not include the deprecated /devadmin/publish/new page.
+
+```{r}
+displayServerFailures("cmspub_", "CMS-based publish failure rate")
+```
+
+### Error rate starting a publish via CMS-based publish UI
+
+Server errors that occur when changes have been selected in the topic tree editor and the content creator clicks "Publish". These errors mean that the publish does not actually start.
+
+```{r}
+displayServerFailures("new_publish_start_", "Publish start failure rate")
+```
+
+### Error rate loading old publish page
+
+Server errors that occur when loading the old /devadmin/publish/new page. While the initial page load is just an empty shell, the data itself is loaded from an API call and if that fails the page never fully loads.
+
+```{r}
+displayServerFailures("old_publish_load_", "Publish page load failure rate")
+```
+
+### Error rate starting a publish via old publish page
+
+Server errors that occur when changes have been selected in the /devadmin/publish/new page and the content creator clicks "Publish". These errors mean that the publish does not actually start.
+
+```{r}
+displayServerFailures("old_publish_start_", "Publish start failure rate")
+```
+
+## Publish timing
+
+Even when publish is reliable, it can still be very slow. This is one of the areas we know of where the tools degrade as the number of simultaneous users increases. As the Content Team grows, we're going to see longer queues of content waiting to go out, and more content in the content tree which slows down each individual publish task. Rather than publish content as it is completed, longer publish times incentivize users to wait and batch up their changes, which is in fact more efficient for everyone in the current system.
+
+### Publish total time (English)
+
+The total wait time, in minutes, between when the content creator clicks the "Publish" button thus enqueueing the publish and when the content becomes visible on the site (for a successful publish).
+
+This is a function of how long the task itself takes (see below), how many times it has to retry due to sporadic errors (see above) and the number of publish tasks ahead in the queue.
+
+_Lines represent 5th percentile, 25th percentile / 1st quartile, median, 75th percentile / 3rd quartile, and 95th percentile._
+
+```{r}
+displayQuantilesPlot(
+  "en_publish_total_", "#ade1bf", "#63c485", "#1a9143", "EN publish total time (min)")
+```
+
+### Publish run time (English)
+
+The time spent just in the individual publish task. This is in small measure proportional to the amount of content being published however the majority of the time is spent in operations across the entire content tree and therefore trends upward over time as the amount of content increases.
+
+_Lines represent 5th percentile, 25th percentile / 1st quartile, median, 75th percentile / 3rd quartile, and 95th percentile._
+
+```{r}
+displayQuantilesPlot(
+  "en_publish_minutes_", "#ade1bf", "#63c485", "#1a9143", "EN publish run time (min)")
+```
+
+### Publish total time (Localized topic trees)
+
+See related section above.
+
+_Lines represent 5th percentile, 25th percentile / 1st quartile, median, 75th percentile / 3rd quartile, and 95th percentile._
+
+```{r}
+displayQuantilesPlot(
+  "intl_publish_total_", "#ade1bf", "#63c485", "#1a9143", "Intl publish total time (min)")
+```
+
+### Publish run time (Localized topic trees)
+
+See related section above.
+
+_Lines represent 5th percentile, 25th percentile / 1st quartile, median, 75th percentile / 3rd quartile, and 95th percentile._
+
+```{r}
+displayQuantilesPlot(
+  "intl_publish_minutes_", "#ade1bf", "#63c485", "#1a9143", "Intl publish run time (min)")
+```
+
+### Load time for CMS-based publish UI
+
+Seconds spent waiting for the publish UI to load in the topic tree editor after clicking "Publish changes...". This involves calculating on the server all the changes in the tree that the content creator has permissions to publish.
+
+_Lines represent 5th percentile, 25th percentile / 1st quartile, median, 75th percentile / 3rd quartile, and 95th percentile._
+
+```{r}
+displayQuantilesPlot(
+  "cmspub_secs_", "#ade1bf", "#63c485", "#1a9143", "CMS-based publish load time (sec)")
+```
+
+### Publish start time for CMS-based publish UI
+
+Seconds spent waiting for a publish to be put into the queue after clicking "Publish" in the topic tree editor.
+
+_Lines represent 5th percentile, 25th percentile / 1st quartile, median, 75th percentile / 3rd quartile, and 95th percentile._
+
+```{r}
+displayQuantilesPlot(
+  "new_publish_start_secs_", "#ade1bf", "#63c485", "#1a9143", "Publish start time (sec)")
+```
+
+### Page load time for old publish page
+
+Seconds spent waiting for the data to load on the (deprecated) /devadmin/content/new page before any selections can be made, not inclusive of the initial empty page load.
+
+_Lines represent 5th percentile, 25th percentile / 1st quartile, median, 75th percentile / 3rd quartile, and 95th percentile._
+
+```{r}
+displayQuantilesPlot(
+  "old_publish_load_secs_", "#ade1bf", "#63c485", "#1a9143", "Page load time (sec)")
+```
+
+### Publish start time for old publish page
+
+Seconds spent waiting for a publish to be put into the queue after clicking "Publish" on the (deprecated) /devadmin/content/new page.
+
+_Lines represent 5th percentile, 25th percentile / 1st quartile, median, 75th percentile / 3rd quartile, and 95th percentile._
+
+```{r}
+displayQuantilesPlot(
+  "old_publish_start_secs_", "#ade1bf", "#63c485", "#1a9143", "Publish start time (sec)")
+```
+
+## CMS loading reliability
+
+Content editing pages and resources must load reliably; when they don't they completely block content authors from making progress in their work.
+
+### Errors loading content revisions
+
+Most content revision loading happens in the topic tree editor - a failure here manifests as an "Error loading resources. Please reload the page." message when expanding nodes in the content tree. We may load these in other places as well.
+
+```{r}
+displayServerFailures("load_", "Content loading failure rate")
+```
+
+### Errors loading the article editor page
+
+These errors manifest as broken "Edit" links on articles in the topic tree editor. This will block editing the article content but not the article metadata.
+
+```{r}
+displayServerFailures("article_page_", "Article editor load errors")
+```
+
+### Errors loading the exercise editor page
+
+These errors manifest as broken "Edit" links on exercises in the topic tree editor. This will block editing the exercise item contents but not the exercise metadata.
+
+```{r}
+displayServerFailures("exercise_page_", "Exercise editor page load errors")
+```
+
+### Error loading exercise data
+
+The exercise items are loaded separately from the initial page load. A failure here will also block editing the exercise item contents but not the exercise metadata.
+
+```{r}
+displayServerFailures("exercise_load_", "Exercise data load errors")
+```
+
+## CMS load times
+
+Load times can make a big impact on the efficiency of content creators. Since a lot of the work involves viewing and editing multiple pieces of content, increases of a few seconds per load really add up of the course of a day. Load times beyond a few seconds can also destroy a user's sense of flow and make the tool feel clunky and annoying.
+
+### Load times for content revisions
+
+Most content revision loading happens in the topic tree editor - this is the "Loading..." message when expanding nodes in the content tree. It likely occurs in other places as well.
+
+_Lines represent 5th percentile, 25th percentile / 1st quartile, median, 75th percentile / 3rd quartile, and 95th percentile._
+
+```{r}
+displayQuantilesPlot(
+  "load_secs_", "#deb6a0", "#bd754e", "#933d10", "Content loading time (sec)")
+```
+
+### Article editor page load
+
+Time spent waiting for the article editor page (reached by clicking the "Edit" button on an article in the topic tree editor) to load.
+
+TODO: Track total client time from the start of page load to a usable state.
+
+_Lines represent 5th percentile, 25th percentile / 1st quartile, median, 75th percentile / 3rd quartile, and 95th percentile._
+
+```{r}
+displayQuantilesPlot(
+  "article_secs_", "#deb6a0", "#bd754e", "#933d10", "Article editor load time (sec)")
+```
+
+### Exercise editor page load
+
+Time spent waiting for the exercise editor page (reached by clicking the "Edit" button on an exercise in the topic tree editor) to load.
+
+TODO: Track total client time from the start of page load to a usable state.
+
+_Lines represent 5th percentile, 25th percentile / 1st quartile, median, 75th percentile / 3rd quartile, and 95th percentile._
+
+```{r}
+displayQuantilesPlot(
+  "exercise_secs_", "#deb6a0", "#bd754e", "#933d10", "Exercise editor page load time (sec)")
+```
+
+### Exercise editor data load
+
+Additional time spent waiting for the exercise editor itself to load once the page has already loaded.
+
+TODO: Track total client time from the start of page load to a usable state.
+
+_Lines represent 5th percentile, 25th percentile / 1st quartile, median, 75th percentile / 3rd quartile, and 95th percentile._
+
+```{r}
+displayQuantilesPlot(
+  "exercise_load_secs_", "#deb6a0", "#bd754e", "#933d10", "Exercise data load time (sec)")
+```
+
+## CMS saving reliability
+
+Save errors are uniquely disruptive to a content creators workflow because they often result in data loss and lost work. In some cases even determining which changes were lost and which were saved incurs a time investment. While in some cases we intentionally give errors - for instance, when content fails to validate - it is generally preferable to give errors as early as possible and not block save unless saving the content would break the CMS or the site in some way.
+
+### Errors creating new content revisions
+
+Rate of errors that occur while creating new content items.
+
+_In red:_ Server errors that mean the content is not saved. This can lead to data loss if retrying doesn't resolve the issue.
+_In orange:_ Validation failures that block save to enforce some constraint, for instance that video YouTube IDs are globally unique.
+
+```{r}
+displayErrorsAndWarnings(
+  "create_", "failures", "Server errors", "validation_errors", "Validation errors",
+  "Content creation save failure rate")
+```
+
+### Errors editing existing content revisions
+
+Rate of errors that occur while saving all types of content metadata as well as article contents for existing content items.
+
+_In red:_ Server errors that mean the content is not saved. This can lead to data loss if retrying doesn't resolve the issue.
+_In orange:_ Validation failures that block save to enforce some constraint, for instance that video YouTube IDs are globally unique.
+
+```{r}
+displayErrorsAndWarnings(
+  "edit_", "failures", "Server errors", "validation_errors", "Validation errors",
+  "Content editing save failure rate")
+```
+
+### Errors saving exercise items
+
+Rate of errors specifically while saving individual items in the exercise editor.
+
+```{r}
+displayServerFailures("item_save_", "Exercise item save errors")
+```
+
+## CMS save times
+
+Slow saves can make the editor feel sluggish, and in some cases (for instance, when creating new content items) they can block further progress. In general however saves do not block editing items or, in the case of the topic tree editor, navigating to and editing other items while the save is ongoing.
+
+### Save times when creating content revisions
+
+Time spent waiting for a new content item to be created in the topic tree editor. This is more blocking than the other instance of saving content because the content cannot be edited until this step is complete.
+
+_Lines represent 5th percentile, 25th percentile / 1st quartile, median, 75th percentile / 3rd quartile, and 95th percentile._
+
+```{r}
+displayQuantilesPlot(
+  "create_secs_", "#a6d2db", "#60b2c4", "#127d95", "Content creation save time (sec)")
+```
+
+### Save times when editing existing content revisions
+
+Time spent waiting for edits to all kinds of content metadata and article contents to be saved to the server, not including the client-side delay between the last keystroke and the start of a save operation. Multiple save operations can be queued up, which can make "saving" appear to take much longer than each individual operation.
+
+_Lines represent 5th percentile, 25th percentile / 1st quartile, median, 75th percentile / 3rd quartile, and 95th percentile._
+
+```{r}
+displayQuantilesPlot(
+  "edit_secs_", "#a6d2db", "#60b2c4", "#127d95", "Content editing save time (sec)")
+```
+
+### Save times when editing exercise items
+
+Time spent waiting for an exercise item to save after hitting the "Save" button on the exercise editor page.
+
+_Lines represent 5th percentile, 25th percentile / 1st quartile, median, 75th percentile / 3rd quartile, and 95th percentile._
+
+```{r}
+displayQuantilesPlot(
+  "item_save_secs_", "#a6d2db", "#60b2c4", "#127d95", "Exercise item save time (sec)")
+```

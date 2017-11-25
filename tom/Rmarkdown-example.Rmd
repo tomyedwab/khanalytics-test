@@ -1,0 +1,47 @@
+---
+title: "Rmarkdown example"
+author: "Tom Yedwab"
+date: "`r format(Sys.Date(), '%B %d, %Y')`"
+output:
+  html_document:
+    theme: paper
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+  echo = FALSE,
+  warning = FALSE,
+  message = FALSE,
+  fig.width = 9.5,
+  fig.height = 4
+)
+# For load.file.from.var
+library(khanalytics)
+# For read_csv
+library(readr)
+# For ggplot
+library(ggplot2)
+```
+
+```{r}
+# The ".csv.gz" extension is necessary so read_csv will automatically decompress the file
+dataFile <- load.file.from.var("data", "./Rmarkdown-example.csv.gz", ".csv.gz")
+data <- read_csv(dataFile,
+                 col_types = cols(week = col_date(format = "%Y-%m-%d")))
+```
+
+**About this report:** This is a very simple example report based on a very simple BigQuery query. The data comes from the latest weekly backup.
+
+Read data from file `r dataFile`.
+Latest week in the report is `r max(data$week)`.
+
+## User registrations per week
+
+This graph shows user registrations per week as well as the trendline.
+
+```{r}
+ggplot(data, aes(x=week, y=f0_/1000000)) +
+  geom_line(color="#1a9143") +
+  geom_smooth() +
+  xlab("Week") + ylab("User registrations per week (millions)")
+```
