@@ -13,37 +13,37 @@
         "exercises_incr_query": {
             "name": "exercises_incr_query",
             "type": "file",
-            "path": "git://git@github.com:khan/khanalytics-personal-pipelines file:/tom/query_pipeline_builder/cp-perf-exercises-incr.sql"
+            "path": "git://git@github.com:tomyedwab/khanalytics-test file:/tom/cp-perf-exercises-incr.sql"
         },
         "load_incr_query": {
             "name": "load_incr_query",
             "type": "file",
-            "path": "git://git@github.com:khan/khanalytics-personal-pipelines file:/tom/query_pipeline_builder/cp-perf-load-incr.sql"
+            "path": "git://git@github.com:tomyedwab/khanalytics-test file:/tom/cp-perf-load-incr.sql"
         },
         "revisions_incr_query": {
             "name": "revisions_incr_query",
             "type": "file",
-            "path": "git://git@github.com:khan/khanalytics-personal-pipelines file:/tom/query_pipeline_builder/cp-perf-revisions-incr.sql"
+            "path": "git://git@github.com:tomyedwab/khanalytics-test file:/tom/cp-perf-revisions-incr.sql"
         },
         "publish_query": {
             "name": "publish_query",
             "type": "file",
-            "path": "git://git@github.com:khan/khanalytics-personal-pipelines file:/tom/query_pipeline_builder/cp-perf-publish.sql"
+            "path": "git://git@github.com:tomyedwab/khanalytics-test file:/tom/cp-perf-publish.sql"
         },
         "start_publish_query": {
             "name": "start_publish_query",
             "type": "file",
-            "path": "git://git@github.com:khan/khanalytics-personal-pipelines file:/tom/query_pipeline_builder/cp-perf-start-publish.sql"
+            "path": "git://git@github.com:tomyedwab/khanalytics-test file:/tom/cp-perf-start-publish.sql"
         },
         "publish_uptime_query": {
             "name": "publish_uptime_query",
             "type": "file",
-            "path": "git://git@github.com:khan/khanalytics-personal-pipelines file:/tom/query_pipeline_builder/cp-perf-publish-uptime.sql"
+            "path": "git://git@github.com:tomyedwab/khanalytics-test file:/tom/cp-perf-publish-uptime.sql"
         },
         "dashboard_final_query": {
             "name": "dashboard_final_query",
             "type": "file",
-            "path": "git://git@github.com:khan/khanalytics-personal-pipelines file:/tom/query_pipeline_builder/cp-perf-dashboard-final.sql"
+            "path": "git://git@github.com:tomyedwab/khanalytics-test file:/tom/cp-perf-dashboard-final.sql"
         },
         "query_write_type_append": {
             "name": "query_write_type_append",
@@ -53,7 +53,7 @@
         "email_script": {
             "name": "email_script",
             "type": "file",
-            "path": "git://git@github.com:khan/khanalytics-personal-pipelines file:/tom/query_pipeline_builder/send-email.py"
+            "path": "git://git@github.com:tomyedwab/khanalytics-test file:/tom/send-email.py"
         },
         "email_dependencies": {
             "name": "email_dependencies",
@@ -68,7 +68,7 @@
         "dashboard_rmd_file": {
             "name": "dashboard_rmd_file",
             "type": "file",
-            "path": "git://git@github.com:khan/khanalytics-personal-pipelines file:/tom/query_pipeline_builder/cp-perf-dashboard.Rmd"
+            "path": "git://git@github.com:tomyedwab/khanalytics-test file:/tom/cp-perf-dashboard.Rmd"
         },
         "from_email": {
             "name": "from_email",

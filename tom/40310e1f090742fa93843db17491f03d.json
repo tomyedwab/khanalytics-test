@@ -10,7 +10,7 @@
         },
         "query_file": {
             "name": "query_file",
-            "path": "git://git@github.com:khan/khanalytics-personal-pipelines file:/tom/query_pipeline_builder/Rmarkdown-example.sql",
+            "path": "git://git@github.com:tomyedwab/khanalytics-test file:/tom/Rmarkdown-example.sql",
             "type": "file"
         },
         "intermediate_table": {
@@ -21,7 +21,7 @@
         "email_script": {
             "name": "email_script",
             "type": "file",
-            "path": "git://git@github.com:khan/khanalytics-personal-pipelines file:/tom/query_pipeline_builder/send-email.py"
+            "path": "git://git@github.com:tomyedwab/khanalytics-test file:/tom/send-email.py"
         },
         "email_dependencies": {
             "name": "email_dependencies",
@@ -36,7 +36,7 @@
         "rmd_file": {
             "name": "rmd_file",
             "type": "file",
-            "path": "git://git@github.com:khan/khanalytics-personal-pipelines file:/tom/query_pipeline_builder/Rmarkdown-example.Rmd"
+            "path": "git://git@github.com:tomyedwab/khanalytics-test file:/tom/Rmarkdown-example.Rmd"
         },
         "from_email": {
             "name": "from_email",

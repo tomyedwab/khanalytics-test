@@ -8,7 +8,7 @@
         "email_script": {
             "name": "email_script",
             "type": "file",
-            "path": "git://git@github.com:khan/khanalytics-personal-pipelines file:/tom/query_pipeline_builder/send-email.py"
+            "path": "git://git@github.com:tomyedwab/khanalytics-test file:/tom/send-email.py"
         },
         "email_dependencies": {
             "name": "email_dependencies",
@@ -23,7 +23,7 @@
         "pulse_Rmd_file": {
             "name": "pulse_Rmd_file",
             "type": "file",
-            "path": "git://git@github.com:khan/khanalytics-personal-pipelines file:/tom/query_pipeline_builder/cp-pulse.Rmd"
+            "path": "git://git@github.com:tomyedwab/khanalytics-test file:/tom/cp-pulse.Rmd"
         },
         "from_email": {
             "name": "from_email",
