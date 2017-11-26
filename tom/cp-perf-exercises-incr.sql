@@ -36,8 +36,8 @@ FROM
         AND method = 'GET'
         AND status = 200
         AND _TABLE_SUFFIX BETWEEN 
-            FORMAT_DATE("%Y%m%d", DATE_SUB(CURRENT_DATE(), INTERVAL 14 DAY))
-            AND FORMAT_DATE("%Y%m%d", DATE(TIMESTAMP "2017-10-01 00:00:00"))
+            FORMAT_DATE("%Y%m%d", DATE_SUB(DATE(@today), INTERVAL 14 DAY))
+            AND FORMAT_DATE("%Y%m%d", DATE(@today))
     GROUP BY week) edit
 
 LEFT JOIN
@@ -52,8 +52,8 @@ LEFT JOIN
         REGEXP_CONTAINS(resource, r'^/api/internal/exercises/[x0-9a-f]+/edit$')
         AND method = 'GET'
         AND _TABLE_SUFFIX BETWEEN 
-            FORMAT_DATE("%Y%m%d", DATE_SUB(CURRENT_DATE(), INTERVAL 14 DAY))
-            AND FORMAT_DATE("%Y%m%d", CURRENT_DATE())
+            FORMAT_DATE("%Y%m%d", DATE_SUB(DATE(@today), INTERVAL 14 DAY))
+            AND FORMAT_DATE("%Y%m%d", DATE(@today))
     GROUP BY week) editstatus
 
 ON edit.week = editstatus.week
@@ -70,8 +70,8 @@ LEFT JOIN
         AND NOT (resource LIKE '%set_live%')
         AND status = 200
         AND _TABLE_SUFFIX BETWEEN 
-            FORMAT_DATE("%Y%m%d", DATE_SUB(CURRENT_DATE(), INTERVAL 14 DAY))
-            AND FORMAT_DATE("%Y%m%d", CURRENT_DATE())
+            FORMAT_DATE("%Y%m%d", DATE_SUB(DATE(@today), INTERVAL 14 DAY))
+            AND FORMAT_DATE("%Y%m%d", DATE(@today))
     GROUP BY week) item
 
 ON edit.week = item.week
@@ -89,8 +89,8 @@ LEFT JOIN
         AND method = "PUT"
         AND NOT (resource LIKE '%set_live%')
         AND _TABLE_SUFFIX BETWEEN 
-            FORMAT_DATE("%Y%m%d", DATE_SUB(CURRENT_DATE(), INTERVAL 14 DAY))
-            AND FORMAT_DATE("%Y%m%d", CURRENT_DATE())
+            FORMAT_DATE("%Y%m%d", DATE_SUB(DATE(@today), INTERVAL 14 DAY))
+            AND FORMAT_DATE("%Y%m%d", DATE(@today))
     GROUP BY week) itemstatus
 
 ON edit.week = itemstatus.week
