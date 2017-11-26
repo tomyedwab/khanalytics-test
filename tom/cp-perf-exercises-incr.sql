@@ -32,7 +32,7 @@ FROM
     APPROX_QUANTILES(end_time - start_time, 20) AS times
     FROM `logs.requestlogs_*`
     WHERE
-        REGEXP_CONTAINS(resource, r'^/api/internal/exercises/[x0-9a-f]+/edit$')
+        REGEXP_CONTAINS(resource, r'^/api/internal/exercises/[x0-9a-f]+/edit')
         AND method = 'GET'
         AND status = 200
         AND _TABLE_SUFFIX BETWEEN 
@@ -49,7 +49,7 @@ LEFT JOIN
     COUNTIF(status = 500) AS server_errors
     FROM `logs.requestlogs_*`
     WHERE
-        REGEXP_CONTAINS(resource, r'^/api/internal/exercises/[x0-9a-f]+/edit$')
+        REGEXP_CONTAINS(resource, r'^/api/internal/exercises/[x0-9a-f]+/edit')
         AND method = 'GET'
         AND _TABLE_SUFFIX BETWEEN 
             FORMAT_DATE("%Y%m%d", DATE_SUB(DATE(@today), INTERVAL 14 DAY))
