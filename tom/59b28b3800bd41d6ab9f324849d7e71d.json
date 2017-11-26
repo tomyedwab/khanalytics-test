@@ -45,6 +45,11 @@
             "type": "file",
             "path": "git://git@github.com:tomyedwab/khanalytics-test file:/tom/cp-perf-dashboard-final.sql"
         },
+        "language_type_standard": {
+            "name": "language_type_standard",
+            "type": "constant",
+            "default": "standard"
+        },
         "query_write_type_append": {
             "name": "query_write_type_append",
             "type": "constant",
@@ -208,6 +213,9 @@
                 },
                 "write_type": {
                     "name": "query_write_type_append"
+                },
+                "language": {
+                    "name": "language_type_standard"
                 }
             },
             "outputs": {
